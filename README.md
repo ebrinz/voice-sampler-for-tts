@@ -1,4 +1,4 @@
-# YouTube Dialogue Splitter
+# Voice Sampler for TTS
 
 Extract clean character dialogue from YouTube clips — no background music, split by speaker. Outputs WAV files ready for voice cloning (e.g., Chatterbox TTS).
 
@@ -21,7 +21,7 @@ Requires Python 3.11+.
 ```bash
 # Clone the repo
 git clone <this-repo>
-cd sam-audio
+cd voice-sampler-for-tts
 
 # Install core dependencies
 pip install torch torchaudio pyannote.audio yt-dlp pytest
