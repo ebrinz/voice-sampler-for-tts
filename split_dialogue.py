@@ -46,6 +46,71 @@ def check_auth():
         sys.exit(1)
 
 
+def extract_video_id(url):
+    """Extract YouTube video ID from various URL formats."""
+    patterns = [
+        r'(?:v=|/v/|youtu\.be/)([a-zA-Z0-9_-]{11})',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    # Fallback: use the last path component or query
+    return re.sub(r'[^\w-]', '_', url)[-20:]
+
+
+def download_audio(url, output_dir):
+    """Download audio from YouTube URL as WAV. Returns (wav_path, video_title)."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    wav_path = output_dir / "raw_audio.wav"
+
+    if wav_path.exists():
+        print(f"Audio already downloaded: {wav_path}")
+        result = subprocess.run(
+            ["yt-dlp", "--print", "%(title)s", "--no-download", url],
+            capture_output=True, text=True
+        )
+        title = result.stdout.strip() or "Unknown"
+        return wav_path, title
+
+    # Get title first (separate call — mixing --print with download is fragile)
+    title_result = subprocess.run(
+        ["yt-dlp", "--print", "%(title)s", "--no-download", url],
+        capture_output=True, text=True
+    )
+    title = title_result.stdout.strip() or "Unknown"
+
+    print("Downloading audio...")
+    result = subprocess.run(
+        [
+            "yt-dlp",
+            "-x",
+            "--audio-format", "wav",
+            "--postprocessor-args", "ffmpeg:-ac 1",
+            "-o", str(wav_path),
+            url,
+        ],
+        capture_output=True, text=True
+    )
+
+    if result.returncode != 0:
+        wav_path.unlink(missing_ok=True)
+        print("Error: yt-dlp failed to download audio.", file=sys.stderr)
+        print(result.stderr, file=sys.stderr)
+        sys.exit(2)
+
+    if not wav_path.exists():
+        candidates = list(output_dir.glob("raw_audio*"))
+        if candidates:
+            candidates[0].rename(wav_path)
+        else:
+            print("Error: download succeeded but WAV file not found.", file=sys.stderr)
+            sys.exit(2)
+
+    print(f"Downloaded: {wav_path}")
+    return wav_path, title
+
+
 def get_device(requested):
     if requested:
         return torch.device(requested)
@@ -84,9 +149,16 @@ def main():
     args = parse_args()
     check_auth()
     device = get_device(args.device)
+
+    video_id = extract_video_id(args.url)
+    output_dir = args.output_dir / video_id
     print(f"Device: {device}")
     print(f"Model: facebook/sam-audio-{args.model_size}")
-    print(f"URL: {args.url}")
+    print(f"Output: {output_dir}")
+
+    # Stage 1: Download
+    wav_path, title = download_audio(args.url, output_dir)
+    print(f"Title: {title}")
 
 
 if __name__ == "__main__":
