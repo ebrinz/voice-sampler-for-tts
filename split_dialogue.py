@@ -178,6 +178,50 @@ def crossfade_stitch(chunks, overlap_samples):
     return result
 
 
+def diarize(wav_path, merge_gap, min_segment):
+    """Run pyannote speaker diarization. Returns list of (start, end, speaker) tuples."""
+    from pyannote.audio import Pipeline
+
+    print("Loading diarization model...")
+    pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1")
+
+    print("Running diarization...")
+    diarization = pipeline(str(wav_path))
+
+    segments = []
+    for turn, _, speaker in diarization.itertracks(yield_label=True):
+        segments.append((turn.start, turn.end, speaker))
+
+    print(f"Found {len(segments)} raw segments")
+
+    segments = merge_segments(segments, merge_gap=merge_gap)
+    segments = filter_segments(segments, min_duration=min_segment)
+
+    print(f"After merge/filter: {len(segments)} segments")
+    return segments
+
+
+def write_manifest(output_dir, video_id, title, segments):
+    """Write diarization.json manifest."""
+    manifest = {
+        "video_id": video_id,
+        "title": title,
+        "segments": [
+            {
+                "id": i + 1,
+                "start": round(s, 2),
+                "end": round(e, 2),
+                "speaker": sp,
+            }
+            for i, (s, e, sp) in enumerate(segments)
+        ],
+    }
+    manifest_path = output_dir / "diarization.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2))
+    print(f"Manifest written: {manifest_path}")
+    return manifest
+
+
 def main():
     args = parse_args()
     check_auth()
@@ -192,6 +236,16 @@ def main():
     # Stage 1: Download
     wav_path, title = download_audio(args.url, output_dir)
     print(f"Title: {title}")
+
+    # Stage 2: Diarize (with cache)
+    manifest_path = output_dir / "diarization.json"
+    if manifest_path.exists() and not args.force:
+        print(f"Loading cached diarization: {manifest_path}")
+        manifest = json.loads(manifest_path.read_text())
+        segments = [(s["start"], s["end"], s["speaker"]) for s in manifest["segments"]]
+    else:
+        segments = diarize(wav_path, args.merge_gap, args.min_segment)
+        manifest = write_manifest(output_dir, video_id, title, segments)
 
 
 if __name__ == "__main__":
