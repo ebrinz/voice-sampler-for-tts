@@ -2,8 +2,6 @@
   <img src="banner.svg" alt="Voice Sampler for TTS" width="100%"/>
 </p>
 
-# Voice Sampler for TTS
-
 Extract clean character dialogue from YouTube clips — no background music, split by speaker. Outputs WAV files ready for voice cloning (e.g., Chatterbox TTS).
 
 ## What It Does
