@@ -222,6 +222,14 @@ def write_manifest(output_dir, video_id, title, segments):
     manifest_path = output_dir / "diarization.json"
     manifest_path.write_text(json.dumps(manifest, indent=2))
     print(f"Manifest written: {manifest_path}")
+
+    # Write Audacity labels file
+    labels_path = output_dir / "labels.txt"
+    with open(labels_path, "w") as f:
+        for i, (s, e, sp) in enumerate(segments):
+            f.write(f"{s}\t{e}\tseg{i+1:03d}\n")
+    print(f"Audacity labels written: {labels_path}")
+
     return manifest
 
 
