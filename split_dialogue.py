@@ -354,6 +354,18 @@ def main():
         output_dir, args.max_chunk, args.force
     )
 
+    # Summary
+    speakers = set(sp for _, _, sp in segments)
+    print(f"\nSummary:")
+    print(f"  Video: {title}")
+    print(f"  Speakers detected: {len(speakers)}")
+    print(f"  Segments processed: {len(segments)}")
+    print(f"  Output directory: {output_dir}")
+    for sp in sorted(speakers):
+        sp_segments = [(s, e) for s, e, speaker in segments if speaker == sp]
+        total_dur = sum(e - s for s, e in sp_segments)
+        print(f"    {sp}: {len(sp_segments)} segments, {total_dur:.1f}s total")
+
 
 if __name__ == "__main__":
     main()
