@@ -1,6 +1,24 @@
+# Core
 torch
 torchaudio
-sam_audio
+torchvision
 pyannote.audio
 yt-dlp
+
+# SAM Audio (install from GitHub, not PyPI)
+# pip install --no-deps git+https://github.com/facebookresearch/sam-audio.git
+# pip install --no-deps "perception-models @ git+https://github.com/facebookresearch/perception_models@unpin-deps"
+# pip install --no-deps git+https://github.com/facebookresearch/ImageBind.git
+# pip install --no-deps git+https://github.com/lematt1991/CLAP.git
+
+# SAM Audio transitive dependencies
+dacvae
+torchdiffeq
+torchlibrosa
+braceexpand
+wget
+webdataset
+protobuf>=5.0,<7.0
+
+# Testing
 pytest
