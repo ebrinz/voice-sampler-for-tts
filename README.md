@@ -315,7 +315,7 @@ Each labeled region becomes its own WAV file, named after the label.
 
 ## Step 6: Use with Chatterbox TTS
 
-The exported WAV files are ready to use as voice references in Chatterbox:
+The exported WAV files are ready to use as voice references in [Chatterbox](https://huggingface.co/ebrinz/chatterbox-turbo-coreml):
 
 ```python
 from chatterbox.tts import ChatterboxTTS
