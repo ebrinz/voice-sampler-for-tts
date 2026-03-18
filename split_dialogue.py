@@ -145,6 +145,39 @@ def format_timestamp(seconds):
     return f"{m}m{s:02d}s"
 
 
+def compute_chunks(duration, max_chunk=20.0, overlap=2.0):
+    """Split a duration into overlapping chunks if it exceeds max_chunk."""
+    if duration <= max_chunk:
+        return [(0.0, duration)]
+    chunks = []
+    step = max_chunk - overlap
+    start = 0.0
+    while start < duration:
+        end = min(start + max_chunk, duration)
+        chunks.append((start, end))
+        if end >= duration:
+            break
+        start += step
+    return chunks
+
+
+def crossfade_stitch(chunks, overlap_samples):
+    """Stitch audio chunks with linear crossfade in overlap regions."""
+    if len(chunks) == 1:
+        return chunks[0]
+
+    result = chunks[0]
+    for chunk in chunks[1:]:
+        if overlap_samples > 0 and overlap_samples <= len(result) and overlap_samples <= len(chunk):
+            fade_out = torch.linspace(1.0, 0.0, overlap_samples)
+            fade_in = torch.linspace(0.0, 1.0, overlap_samples)
+            overlap_region = result[-overlap_samples:] * fade_out + chunk[:overlap_samples] * fade_in
+            result = torch.cat([result[:-overlap_samples], overlap_region, chunk[overlap_samples:]])
+        else:
+            result = torch.cat([result, chunk])
+    return result
+
+
 def main():
     args = parse_args()
     check_auth()
