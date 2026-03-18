@@ -296,12 +296,47 @@ def separate_segment(model, processor, device, full_audio, sr, start, end, max_c
     return crossfade_stitch(separated_chunks, overlap_samples=overlap_samples)
 
 
-def process_all_segments(model, processor, device, wav_path, segments, output_dir, max_chunk, force):
-    """Process all diarized segments through SAM Audio."""
+def separate_full_audio(model, processor, device, wav_path, output_dir, max_chunk, force):
+    """Separate voice from background for the entire audio file. Returns path to clean audio."""
+    clean_path = output_dir / "clean_audio.wav"
+
+    if clean_path.exists() and not force:
+        print(f"Clean audio already exists: {clean_path}")
+        return clean_path
+
     full_audio, sr = torchaudio.load(str(wav_path))
     full_audio = full_audio[0]  # mono
-
+    duration = len(full_audio) / sr
     out_sr = processor.audio_sampling_rate
+
+    print(f"Separating voice from background ({duration:.1f}s)...")
+    chunks = compute_chunks(duration, max_chunk=max_chunk, overlap=2.0)
+    print(f"  Processing in {len(chunks)} chunks...")
+
+    separated_chunks = []
+    for i, (chunk_start, chunk_end) in enumerate(chunks):
+        cs = int(chunk_start * sr)
+        ce = int(chunk_end * sr)
+        chunk_audio = full_audio[cs:ce]
+        print(f"  [{i+1}/{len(chunks)}] {format_timestamp(chunk_start)}-{format_timestamp(chunk_end)}")
+        separated = _separate_audio(model, processor, device, chunk_audio, sr)
+        separated_chunks.append(separated)
+
+    if len(separated_chunks) == 1:
+        clean_audio = separated_chunks[0]
+    else:
+        overlap_samples = int(2.0 * out_sr)
+        clean_audio = crossfade_stitch(separated_chunks, overlap_samples=overlap_samples)
+
+    torchaudio.save(str(clean_path), clean_audio.unsqueeze(0), out_sr)
+    print(f"Clean audio saved: {clean_path}")
+    return clean_path
+
+
+def cut_segments(clean_audio_path, segments, output_dir, force):
+    """Cut diarized segments from the clean (already separated) audio."""
+    clean_audio, sr = torchaudio.load(str(clean_audio_path))
+    clean_audio = clean_audio[0]  # mono
     total = len(segments)
 
     for i, (start, end, speaker) in enumerate(segments):
@@ -317,13 +352,13 @@ def process_all_segments(model, processor, device, wav_path, segments, output_di
             print(f"  [{i+1}/{total}] Skipping (exists): {out_path.name}")
             continue
 
+        start_sample = int(start * sr)
+        end_sample = int(end * sr)
+        segment_audio = clean_audio[start_sample:end_sample]
+
         duration = end - start
         print(f"  [{i+1}/{total}] {speaker} | {ts_start}-{ts_end} ({duration:.1f}s)")
-
-        separated = separate_segment(
-            model, processor, device, full_audio, sr, start, end, max_chunk
-        )
-        torchaudio.save(str(out_path), separated.unsqueeze(0), out_sr)
+        torchaudio.save(str(out_path), segment_audio.unsqueeze(0), sr)
 
     print(f"\nDone! Output in: {output_dir}")
 
@@ -343,22 +378,29 @@ def main():
     wav_path, title = download_audio(args.url, output_dir)
     print(f"Title: {title}")
 
-    # Stage 2: Diarize (with cache)
+    # Stage 2: Separate full audio with SAM Audio (remove background score)
+    model, processor = load_sam_audio(args.model_size, device)
+    clean_audio_path = separate_full_audio(
+        model, processor, device, wav_path, output_dir, args.max_chunk, args.force
+    )
+
+    # Free model memory before diarization
+    del model
+    torch.cuda.empty_cache() if device.type == "cuda" else None
+    import gc; gc.collect()
+
+    # Stage 3: Diarize the clean audio (much better speaker detection without background score)
     manifest_path = output_dir / "diarization.json"
     if manifest_path.exists() and not args.force:
         print(f"Loading cached diarization: {manifest_path}")
         manifest = json.loads(manifest_path.read_text())
         segments = [(s["start"], s["end"], s["speaker"]) for s in manifest["segments"]]
     else:
-        segments = diarize(wav_path, args.merge_gap, args.min_segment)
+        segments = diarize(clean_audio_path, args.merge_gap, args.min_segment)
         manifest = write_manifest(output_dir, video_id, title, segments)
 
-    # Stage 3: Separate with SAM Audio
-    model, processor = load_sam_audio(args.model_size, device)
-    process_all_segments(
-        model, processor, device, wav_path, segments,
-        output_dir, args.max_chunk, args.force
-    )
+    # Stage 4: Cut diarized segments from the clean audio
+    cut_segments(clean_audio_path, segments, output_dir, args.force)
 
     # Summary
     speakers = set(sp for _, _, sp in segments)
