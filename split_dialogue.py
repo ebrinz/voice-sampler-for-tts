@@ -222,6 +222,106 @@ def write_manifest(output_dir, video_id, title, segments):
     return manifest
 
 
+def load_sam_audio(model_size, device):
+    """Load SAM Audio model and processor."""
+    from sam_audio import SAMAudio, SAMAudioProcessor
+
+    model_name = f"facebook/sam-audio-{model_size}"
+    print(f"Loading SAM Audio model: {model_name} (this may take a while)...")
+    processor = SAMAudioProcessor.from_pretrained(model_name)
+    model = SAMAudio.from_pretrained(model_name).to(device)
+    model.requires_grad_(False)
+
+    sr = getattr(processor, "audio_sampling_rate", None)
+    if sr is None:
+        sr = getattr(processor, "sampling_rate", getattr(processor, "sample_rate", None))
+        if sr is None:
+            print("Warning: could not determine processor sample rate, defaulting to 24000", file=sys.stderr)
+    print(f"Model loaded. Output sample rate: {sr or 24000}Hz")
+    return model, processor
+
+
+def _separate_audio(model, processor, device, audio_tensor, sr):
+    """Run SAM Audio separation on a single audio tensor."""
+    import tempfile
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        tmp_path = f.name
+    torchaudio.save(tmp_path, audio_tensor.unsqueeze(0), sr)
+
+    try:
+        inputs = processor(
+            audios=[tmp_path],
+            descriptions=["a person speaking"]
+        ).to(device)
+
+        with torch.inference_mode():
+            result = model.separate(inputs)
+
+        target = result.target
+        if target.ndim >= 2:
+            target = target[0]
+        return target.cpu()
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+
+def separate_segment(model, processor, device, full_audio, sr, start, end, max_chunk):
+    """Separate voice from background for one segment. Handles chunking."""
+    start_sample = int(start * sr)
+    end_sample = int(end * sr)
+    segment_audio = full_audio[start_sample:end_sample]
+
+    duration = end - start
+    chunks = compute_chunks(duration, max_chunk=max_chunk, overlap=2.0)
+
+    if len(chunks) == 1:
+        return _separate_audio(model, processor, device, segment_audio, sr)
+
+    print(f"    Chunking {duration:.1f}s segment into {len(chunks)} parts...")
+    separated_chunks = []
+    for chunk_start, chunk_end in chunks:
+        cs = int(chunk_start * sr)
+        ce = int(chunk_end * sr)
+        chunk_audio = segment_audio[cs:ce]
+        separated = _separate_audio(model, processor, device, chunk_audio, sr)
+        separated_chunks.append(separated)
+
+    overlap_samples = int(2.0 * processor.audio_sampling_rate)
+    return crossfade_stitch(separated_chunks, overlap_samples=overlap_samples)
+
+
+def process_all_segments(model, processor, device, wav_path, segments, output_dir, max_chunk, force):
+    """Process all diarized segments through SAM Audio."""
+    full_audio, sr = torchaudio.load(str(wav_path))
+    full_audio = full_audio[0]  # mono
+
+    out_sr = processor.audio_sampling_rate
+    total = len(segments)
+
+    for i, (start, end, speaker) in enumerate(segments):
+        ts_start = format_timestamp(start)
+        ts_end = format_timestamp(end)
+        seg_id = f"segment_{i+1:03d}_{ts_start}-{ts_end}"
+
+        speaker_dir = output_dir / speaker
+        speaker_dir.mkdir(parents=True, exist_ok=True)
+        out_path = speaker_dir / f"{seg_id}.wav"
+
+        if out_path.exists() and not force:
+            print(f"  [{i+1}/{total}] Skipping (exists): {out_path.name}")
+            continue
+
+        duration = end - start
+        print(f"  [{i+1}/{total}] {speaker} | {ts_start}-{ts_end} ({duration:.1f}s)")
+
+        separated = separate_segment(
+            model, processor, device, full_audio, sr, start, end, max_chunk
+        )
+        torchaudio.save(str(out_path), separated.unsqueeze(0), out_sr)
+
+    print(f"\nDone! Output in: {output_dir}")
+
+
 def main():
     args = parse_args()
     check_auth()
@@ -246,6 +346,13 @@ def main():
     else:
         segments = diarize(wav_path, args.merge_gap, args.min_segment)
         manifest = write_manifest(output_dir, video_id, title, segments)
+
+    # Stage 3: Separate with SAM Audio
+    model, processor = load_sam_audio(args.model_size, device)
+    process_all_segments(
+        model, processor, device, wav_path, segments,
+        output_dir, args.max_chunk, args.force
+    )
 
 
 if __name__ == "__main__":
