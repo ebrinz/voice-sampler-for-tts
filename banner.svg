@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 280">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f0c29"/>
+      <stop offset="50%" style="stop-color:#302b63"/>
+      <stop offset="100%" style="stop-color:#24243e"/>
+    </linearGradient>
+    <linearGradient id="wave1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00d2ff"/>
+      <stop offset="100%" style="stop-color:#7b2ff7"/>
+    </linearGradient>
+    <linearGradient id="wave2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f857a6"/>
+      <stop offset="100%" style="stop-color:#ff5858"/>
+    </linearGradient>
+    <linearGradient id="wave3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#43e97b"/>
+      <stop offset="100%" style="stop-color:#38f9d7"/>
+    </linearGradient>
+    <linearGradient id="titleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00d2ff"/>
+      <stop offset="50%" style="stop-color:#b465da"/>
+      <stop offset="100%" style="stop-color:#ff6b6b"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow">
+      <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="280" fill="url(#bg)" rx="12"/>
+
+  <!-- Subtle grid lines -->
+  <g opacity="0.04" stroke="#fff" stroke-width="0.5">
+    <line x1="0" y1="70" x2="900" y2="70"/>
+    <line x1="0" y1="140" x2="900" y2="140"/>
+    <line x1="0" y1="210" x2="900" y2="210"/>
+  </g>
+
+  <!-- Waveform group - left side -->
+  <g transform="translate(50, 140)" filter="url(#glow)">
+    <!-- Speaker 1 waveform (cyan/purple) -->
+    <g opacity="0.9">
+      <rect x="0" y="-28" width="3" height="56" rx="1.5" fill="url(#wave1)"/>
+      <rect x="7" y="-42" width="3" height="84" rx="1.5" fill="url(#wave1)"/>
+      <rect x="14" y="-18" width="3" height="36" rx="1.5" fill="url(#wave1)"/>
+      <rect x="21" y="-55" width="3" height="110" rx="1.5" fill="url(#wave1)"/>
+      <rect x="28" y="-35" width="3" height="70" rx="1.5" fill="url(#wave1)"/>
+      <rect x="35" y="-22" width="3" height="44" rx="1.5" fill="url(#wave1)"/>
+      <rect x="42" y="-48" width="3" height="96" rx="1.5" fill="url(#wave1)"/>
+      <rect x="49" y="-15" width="3" height="30" rx="1.5" fill="url(#wave1)"/>
+      <rect x="56" y="-38" width="3" height="76" rx="1.5" fill="url(#wave1)"/>
+      <rect x="63" y="-25" width="3" height="50" rx="1.5" fill="url(#wave1)"/>
+    </g>
+
+    <!-- Separator arrow -->
+    <g transform="translate(80, 0)" opacity="0.6">
+      <line x1="0" y1="0" x2="20" y2="0" stroke="#fff" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <polygon points="22,-4 30,0 22,4" fill="#fff" opacity="0.6"/>
+    </g>
+
+    <!-- Speaker 2 waveform (pink/red) - separated -->
+    <g opacity="0.9" transform="translate(120, -30)">
+      <rect x="0" y="-12" width="3" height="24" rx="1.5" fill="url(#wave2)"/>
+      <rect x="7" y="-20" width="3" height="40" rx="1.5" fill="url(#wave2)"/>
+      <rect x="14" y="-8" width="3" height="16" rx="1.5" fill="url(#wave2)"/>
+      <rect x="21" y="-25" width="3" height="50" rx="1.5" fill="url(#wave2)"/>
+      <rect x="28" y="-15" width="3" height="30" rx="1.5" fill="url(#wave2)"/>
+    </g>
+
+    <!-- Speaker 3 waveform (green/teal) - separated -->
+    <g opacity="0.9" transform="translate(120, 30)">
+      <rect x="0" y="-15" width="3" height="30" rx="1.5" fill="url(#wave3)"/>
+      <rect x="7" y="-10" width="3" height="20" rx="1.5" fill="url(#wave3)"/>
+      <rect x="14" y="-22" width="3" height="44" rx="1.5" fill="url(#wave3)"/>
+      <rect x="21" y="-8" width="3" height="16" rx="1.5" fill="url(#wave3)"/>
+      <rect x="28" y="-18" width="3" height="36" rx="1.5" fill="url(#wave3)"/>
+    </g>
+  </g>
+
+  <!-- Microphone icon -->
+  <g transform="translate(232, 108)" filter="url(#softGlow)">
+    <rect x="8" y="0" width="16" height="28" rx="8" fill="none" stroke="url(#wave1)" stroke-width="2"/>
+    <path d="M4,22 Q4,38 16,38 Q28,38 28,22" fill="none" stroke="url(#wave1)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="16" y1="38" x2="16" y2="46" stroke="url(#wave1)" stroke-width="2" stroke-linecap="round"/>
+    <line x1="10" y1="46" x2="22" y2="46" stroke="url(#wave1)" stroke-width="2" stroke-linecap="round"/>
+    <!-- Sound rings -->
+    <path d="M32,8 Q38,14 32,22" fill="none" stroke="#7b2ff7" stroke-width="1.5" opacity="0.5" stroke-linecap="round"/>
+    <path d="M36,4 Q44,14 36,26" fill="none" stroke="#7b2ff7" stroke-width="1.5" opacity="0.3" stroke-linecap="round"/>
+  </g>
+
+  <!-- Title -->
+  <text x="285" y="132" font-family="'SF Pro Display', 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="42" font-weight="700" fill="url(#titleGrad)" letter-spacing="-0.5">
+    Voice Sampler
+  </text>
+  <text x="285" y="168" font-family="'SF Pro Display', 'Segoe UI', system-ui, -apple-system, sans-serif" font-size="28" font-weight="300" fill="#a0a0c0" letter-spacing="3">
+    FOR TTS
+  </text>
+
+  <!-- Subtitle -->
+  <text x="285" y="200" font-family="'SF Mono', 'Fira Code', 'Cascadia Code', monospace" font-size="13" fill="#6a6a8a" letter-spacing="0.5">
+    YouTube &rarr; SAM Audio &rarr; Speaker Diarization &rarr; Clean Voice Clips
+  </text>
+
+  <!-- Right side decorative waveform -->
+  <g transform="translate(700, 140)" opacity="0.15">
+    <rect x="0" y="-20" width="4" height="40" rx="2" fill="#00d2ff"/>
+    <rect x="10" y="-35" width="4" height="70" rx="2" fill="#7b2ff7"/>
+    <rect x="20" y="-15" width="4" height="30" rx="2" fill="#b465da"/>
+    <rect x="30" y="-45" width="4" height="90" rx="2" fill="#f857a6"/>
+    <rect x="40" y="-25" width="4" height="50" rx="2" fill="#ff5858"/>
+    <rect x="50" y="-38" width="4" height="76" rx="2" fill="#43e97b"/>
+    <rect x="60" y="-12" width="4" height="24" rx="2" fill="#38f9d7"/>
+    <rect x="70" y="-30" width="4" height="60" rx="2" fill="#00d2ff"/>
+    <rect x="80" y="-50" width="4" height="100" rx="2" fill="#7b2ff7"/>
+    <rect x="90" y="-20" width="4" height="40" rx="2" fill="#b465da"/>
+    <rect x="100" y="-40" width="4" height="80" rx="2" fill="#f857a6"/>
+    <rect x="110" y="-18" width="4" height="36" rx="2" fill="#ff5858"/>
+    <rect x="120" y="-32" width="4" height="64" rx="2" fill="#43e97b"/>
+    <rect x="130" y="-10" width="4" height="20" rx="2" fill="#38f9d7"/>
+    <rect x="140" y="-42" width="4" height="84" rx="2" fill="#00d2ff"/>
+    <rect x="150" y="-22" width="4" height="44" rx="2" fill="#7b2ff7"/>
+  </g>
+
+  <!-- Tech badges -->
+  <g transform="translate(285, 220)">
+    <rect x="0" y="0" width="78" height="22" rx="4" fill="#302b63" stroke="#4a4a6a" stroke-width="0.5"/>
+    <text x="39" y="15" font-family="'SF Mono', monospace" font-size="10" fill="#00d2ff" text-anchor="middle">SAM Audio</text>
+
+    <rect x="88" y="0" width="68" height="22" rx="4" fill="#302b63" stroke="#4a4a6a" stroke-width="0.5"/>
+    <text x="122" y="15" font-family="'SF Mono', monospace" font-size="10" fill="#f857a6" text-anchor="middle">pyannote</text>
+
+    <rect x="166" y="0" width="72" height="22" rx="4" fill="#302b63" stroke="#4a4a6a" stroke-width="0.5"/>
+    <text x="202" y="15" font-family="'SF Mono', monospace" font-size="10" fill="#43e97b" text-anchor="middle">Chatterbox</text>
+
+    <rect x="248" y="0" width="60" height="22" rx="4" fill="#302b63" stroke="#4a4a6a" stroke-width="0.5"/>
+    <text x="278" y="15" font-family="'SF Mono', monospace" font-size="10" fill="#ffb347" text-anchor="middle">Audacity</text>
+  </g>
+</svg>
