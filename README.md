@@ -1,10 +1,4 @@
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ebrinz/voice-sampler-for-tts/master/banner.svg">
-    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/ebrinz/voice-sampler-for-tts/master/banner.svg">
-    <img alt="Voice Sampler for TTS" src="https://raw.githubusercontent.com/ebrinz/voice-sampler-for-tts/master/banner.svg" width="100%">
-  </picture>
-</p>
+![Voice Sampler for TTS](./banner.svg)
 
 Extract clean character dialogue from YouTube clips — no background music, split by speaker. Outputs WAV files ready for voice cloning (e.g., Chatterbox TTS).
 
