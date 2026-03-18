@@ -261,6 +261,9 @@ def _separate_audio(model, processor, device, audio_tensor, sr):
             result = model.separate(inputs)
 
         target = result.target
+        # result.target may be a list (batch) or tensor
+        if isinstance(target, list):
+            target = target[0]
         if target.ndim >= 2:
             target = target[0]
         return target.cpu()
