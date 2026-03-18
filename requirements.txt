@@ -1,0 +1,6 @@
+torch
+torchaudio
+sam_audio
+pyannote.audio
+yt-dlp
+pytest
