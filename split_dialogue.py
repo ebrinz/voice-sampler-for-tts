@@ -186,10 +186,13 @@ def diarize(wav_path, merge_gap, min_segment):
     pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1")
 
     print("Running diarization...")
-    diarization = pipeline(str(wav_path))
+    result = pipeline(str(wav_path))
+
+    # pyannote v4 returns DiarizeOutput; v3 returns Annotation directly
+    annotation = getattr(result, "speaker_diarization", result)
 
     segments = []
-    for turn, _, speaker in diarization.itertracks(yield_label=True):
+    for turn, _, speaker in annotation.itertracks(yield_label=True):
         segments.append((turn.start, turn.end, speaker))
 
     print(f"Found {len(segments)} raw segments")
