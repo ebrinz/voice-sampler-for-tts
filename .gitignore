@@ -1,0 +1,15 @@
+output/
+__pycache__/
+*.pyc
+.DS_Store
+.pytest_cache/
+
+# Model files
+*.pt
+*.bin
+*.safetensors
+*.ckpt
+*.pth
+
+# HuggingFace cache
+.cache/
